@@ -168,14 +168,16 @@ def digitize_shower(shower_df: pd.DataFrame, voxel_df: pd.DataFrame):
 
     energy = shower_df.groupby(['z_bin_index', 'r_bin_index', 'phi_bin_index'])['energy'].sum().reset_index()
     energy = energy.rename(columns={'energy': 'binned_energy'})
-
+    energy = energy[energy['z_bin_index'] != -1]  # Filter out pixels that were not assigned to any z-bin
+    energy = energy[energy['r_bin_index'] != -1]  # Filter out pixels that were not assigned to any r-bin
+    energy = energy[energy['phi_bin_index'] != -1]  # Filter out pixels that were not assigned to any phi-bin
     # print(energy)
 
     energized_voxels = voxel_df.merge(energy, on=['z_bin_index', 'r_bin_index', 'phi_bin_index'], how='left').fillna(0)
 
-    # print(energized_voxels[energized_voxels["binned_energy"] > 0])
+    digitized_shower = shower_df.merge(energy, on=['z_bin_index', 'r_bin_index', 'phi_bin_index'], how='inner').dropna()
     
-    return shower_df, energized_voxels
+    return digitized_shower, energized_voxels
 
 def read_binning_structure(xml_file):
     """
@@ -246,7 +248,7 @@ def get_voxels(particle_df: pd.DataFrame, envelope_xml: str, binning_xml: str) -
     z_bin_edges = np.concatenate(([z_bin_edges[0]], selected_upper_edges[:-1], [z_bin_edges[-1]]))
     z_bins = np.stack([z_bin_edges[:-1], z_bin_edges[1:]], axis=1)  # shape (num_z_bins, 2)
 
-    print(z_bins)
+    # print(z_bins)
 
     # print(z_bins)
 

@@ -136,7 +136,7 @@ def assemble_mesh(
         x=V[:, 0], y=V[:, 1], z=V[:, 2],
         i=I, j=J, k=K,
         intensity=intensity,
-        colorscale=COLORSCALE,
+        colorscale="Plotly3",
         cmin=0, cmax=1,
         showscale=False,
         opacity=opacity,
