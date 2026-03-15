@@ -8,6 +8,7 @@ dependencies = [
     "altair>=6.0.0",
     "awkward-pandas>=2023.8.0",
     "gradio>=6.8.0",
+    "h5py>=3.16.0",
     "jupyter>=1.1.1",
     "pandas>=1.4.0,<3",
     "plotly>=6.6.0",

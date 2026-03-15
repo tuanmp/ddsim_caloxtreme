@@ -10,9 +10,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 
-from annular_mesh import assemble_mesh
-from annular_surface import assemble_traces
-from utils import (
+from scripts.annular_mesh import assemble_mesh
+from scripts.root_utils import (
     BARREL_CONTRIBUTION_KEY,
     BARREL_KEY,
     ENDCAP_CONTRIBUTION_KEY,
@@ -25,7 +24,7 @@ from utils import (
     preprocess_particles,
     transformation_matrices,
 )
-from voxelize import digitize_shower, get_voxels
+from scripts.voxelize import digitize_shower, get_voxels
 
 PLOT_SIZE = (600, 600)
 XY_LIMITS = (-1.7, 1.7)
@@ -148,12 +147,10 @@ def make_3d_shower_chart(barrel_df, selected_z_layer=None):
 
 if len(preprocessed_array) > 0:
 
-    cols = st.columns(3)
+    cols = st.columns(2)
     with cols[0]:
         event_number = st.number_input("Select event number", min_value=0, max_value=len(preprocessed_array)-1, value=0, step=1, format="%d")
     with cols[1]:
-        psi = st.number_input("Select cone angle (degrees)", min_value=0.0, max_value=45., value=10.0, step=0.5)
-    with cols[2]:
         deltaR = st.number_input("Select deltaR for hit selection", min_value=0.0, max_value=0.1, value=0.05, step=0.01)
     event_data = preprocessed_array[event_number]
     # event_data = pd.DataFrame(event_data)
@@ -171,11 +168,20 @@ if len(preprocessed_array) > 0:
     barrel_contrib_df = pd.DataFrame(event_data[barrel_contrib_keys].to_list())
     # print(barrel_contrib_df)
     # print(barrel_contrib_df.columns)
+    print("Total energy deposit: ", barrel_contrib_df["ECalBarrelCollectionContributions.energy"].sum())
 
 
     barrel_df = barrel_df.rename(columns=lambda col: col.replace(".", "_").split("_")[-1])
 
     particle_df = particle_df.rename(columns=lambda col: col.replace(".", "_"))
+    # print(particle_df.columns)
+    momentum = particle_df[["MCParticles_momentum_x", "MCParticles_momentum_y", "MCParticles_momentum_z"]].to_numpy()
+    mominetum_at_endpoint = particle_df[["MCParticles_momentumAtEndpoint_x", "MCParticles_momentumAtEndpoint_y", "MCParticles_momentumAtEndpoint_z"]].to_numpy()
+    print("particle momentum: ", np.linalg.norm(momentum, axis=1))
+    print("particle momentum at endpoint: ", np.linalg.norm(mominetum_at_endpoint, axis=1))
+    print("Particle mass: ", particle_df["MCParticles_mass"].to_numpy())
+    # print(np.sqrt((particle_df["MCParticles_momentum_x"] ** 2 + particle_df["MCParticles_momentum_y"] ** 2 + particle_df["MCParticles_momentum_z"] ** 2).values[0]))
+
     barrel_contrib_df = barrel_contrib_df.rename(columns=lambda col: col.replace(".", "_").split("_", 1)[-1])
 
     barrel_contrib_df = barrel_contrib_df.astype({"PDG": int})
@@ -198,59 +204,24 @@ if len(preprocessed_array) > 0:
     endpoint_r = 10 # max(np.linalg.norm(endpoint[:2]), 1.8)
     endpoint = direction_xy * endpoint_r + vertex[:2]
 
-    # theta = 10 # in degrees
-    def rotation_matrix_2d(angle):
-        rad = np.radians(angle)
-        return np.array([[np.cos(rad), -np.sin(rad)], [np.sin(rad), np.cos(rad)]])
-
-    upper_line_direction = rotation_matrix_2d( psi) @ direction_xy
-    upper_line = vertex[:2] + upper_line_direction * endpoint_r
-    upper_line = (upper_line * np.abs(endpoint[0] / upper_line[0])) #if upper_line[0] != 0 else upper_line
-
-    # print(upper_line_direction)
-    lower_line_direction = rotation_matrix_2d(-psi) @ direction_xy
-    lower_line = vertex[:2] + lower_line_direction * endpoint_r
-    lower_line = (lower_line * np.abs(endpoint[0] / lower_line[0])) #if lower_line[0] != 0 else lower_line
-    # print(lower_line_direction)
-
-    cone = {
-        "x": [vertex[0], endpoint[0]],
-        "y": [vertex[1], endpoint[1]],
-        "y1": [vertex[1], upper_line[1]],
-        "y2": [vertex[1], lower_line[1]],
-    }
-    cone_xy = pd.DataFrame(cone)
-
-    # print(cone_xy)
-
-    upper_line_direction_rz = rotation_matrix_2d(psi) @ direction_rz
-    upper_line_rz = vertex_rz + upper_line_direction_rz * endpoint_r
-    lower_line_direction_rz = rotation_matrix_2d(-psi) @ direction_rz
-    lower_line_rz = vertex_rz + lower_line_direction_rz * endpoint_r
-    cone_rz  = {
+    direction_rz_df = pd.DataFrame({
         "z": [vertex_rz[0], vertex_rz[0] + direction_rz[0] * endpoint_r],
         "r": [vertex_rz[1], vertex_rz[1] + direction_rz[1] * endpoint_r],
-        "z1": [vertex_rz[0], upper_line_rz[0]],
-        "z2": [vertex_rz[0], lower_line_rz[0]],
-    }
-    cone_rz = pd.DataFrame(cone_rz)
+    })
 
-    barrel_df["delta_phi"] = barrel_df["phi"] - particle_phi
-    barrel_df["delta_eta"] = barrel_df["eta"] - particle_eta
-    barrel_df["delta_r"] = np.sqrt(barrel_df["delta_phi"] ** 2 + barrel_df["delta_eta"] ** 2)
-    barrel_df["contained_in_cone"] = barrel_df["delta_r"] < deltaR
+    # barrel_df["delta_phi"] = barrel_df["phi"] - particle_phi
 
     barel_df = compute_relative_position(barrel_df, particle_df)
     # print(barrel_df.columns)
 
 
-    contrib_to_collection = []
-    for idx, row in barrel_df.iterrows():
-        contrib_to_collection += [idx] * (row["end"] - row["begin"])#.astype(np.int64)
-    contrib_to_collection = np.array(contrib_to_collection)
-    for var in ["x", "y", "z", "r"]:
-        if len(contrib_to_collection) > 0:
-            barrel_contrib_df[f"cell_{var}"] = barrel_df[f"{var}"].to_numpy()[contrib_to_collection]
+    # contrib_to_collection = []
+    # for idx, row in barrel_df.iterrows():
+    #     contrib_to_collection += [idx] * (row["end"] - row["begin"])#.astype(np.int64)
+    # contrib_to_collection = np.array(contrib_to_collection)
+    # for var in ["x", "y", "z", "r"]:
+    #     if len(contrib_to_collection) > 0:
+    #         barrel_contrib_df[f"cell_{var}"] = barrel_df[f"{var}"].to_numpy()[contrib_to_collection]
 
     voxels = get_voxels(particle_df, envelop_xml, binning_xml)
 
@@ -284,21 +255,10 @@ if len(preprocessed_array) > 0:
             )
             xy_barrel_fig.add_trace(
                 go.Scatter(
-                    x=[cone_xy["x"].iloc[0], cone_xy["x"].iloc[1], cone_xy["x"].iloc[1]],
-                    y=[cone_xy["y"].iloc[0], cone_xy["y1"].iloc[1], cone_xy["y2"].iloc[1]],
+                    x=[vertex[0], endpoint[0]],
+                    y=[vertex[1], endpoint[1]],
                     mode="lines",
-                    fill="toself",
-                    fillcolor="rgba(87, 164, 76, 0.2)",
-                    line=dict(color="rgba(87, 164, 76, 0.4)", width=1),
-                    name="Cone",
-                )
-            )
-            xy_barrel_fig.add_trace(
-                go.Scatter(
-                    x=cone_xy["x"],
-                    y=cone_xy["y"],
-                    mode="lines",
-                    line=dict(color="red", width=2),
+                    line=dict(color="red", width=1),
                     name="Particle Direction",
                 )
             )
@@ -330,29 +290,11 @@ if len(preprocessed_array) > 0:
             )
             rz_barrel_fig.add_trace(
                 go.Scatter(
-                    x=cone_rz["z"],
-                    y=cone_rz["r"],
+                    x=direction_rz_df["z"],
+                    y=direction_rz_df["r"],
                     mode="lines",
-                    line=dict(color="red", width=2),
+                    line=dict(color="red", width=1),
                     name="Particle Direction",
-                )
-            )
-            rz_barrel_fig.add_trace(
-                go.Scatter(
-                    x=[cone_rz["z"].iloc[0], cone_rz["z1"].iloc[1]],
-                    y=[cone_rz["r"].iloc[0], cone_rz["r"].iloc[1]],
-                    mode="lines",
-                    line=dict(color="rgba(87, 164, 76, 0.6)", width=1),
-                    showlegend=False,
-                )
-            )
-            rz_barrel_fig.add_trace(
-                go.Scatter(
-                    x=[cone_rz["z"].iloc[0], cone_rz["z2"].iloc[1]],
-                    y=[cone_rz["r"].iloc[0], cone_rz["r"].iloc[1]],
-                    mode="lines",
-                    line=dict(color="rgba(87, 164, 76, 0.6)", width=1),
-                    showlegend=False,
                 )
             )
             rz_barrel_fig.update_layout(
@@ -372,17 +314,10 @@ if len(preprocessed_array) > 0:
                 tooltip=["energy"]
             ).properties(title="Barrel Calorimeter Contributions", width=PLOT_SIZE[0], height=PLOT_SIZE[1]).interactive()
 
-            rz_direcion_chart = altair.Chart(cone_rz).mark_line(color='red', opacity=0.5).encode(
+            rz_direcion_chart = altair.Chart(direction_rz_df).mark_line(color='red', opacity=0.5).encode(
                 x="z",
                 y="r"
             ).properties(title="Particle Direction", width=PLOT_SIZE[0], height=PLOT_SIZE[1]).interactive()
-
-            rz_cone = rz_direcion_chart.mark_area(opacity=0.2, color='#57A44C').encode(
-                x=altair.X("z1", title="z"),
-                x2=altair.X2("z2", title=None)
-            ).properties(title="Particle Direction Cone", width=PLOT_SIZE[0], height=PLOT_SIZE[1]).interactive()   
-
-            cone_plot_rz = altair.layer(rz_direcion_chart, rz_cone).resolve_scale(x="shared", y="shared")
 
             rz_barrel_contrib_chart = altair.Chart(barrel_contrib_df).mark_circle().encode(
                 x=altair.X("cell_z", scale=altair.Scale(domain=[Z_LIMIT[0], Z_LIMIT[1]])),
@@ -391,15 +326,6 @@ if len(preprocessed_array) > 0:
                 color=altair.Color("PDG").scale(scheme="category10", domain=sorted(barrel_contrib_df["PDG"].unique())),
                 tooltip=["energy"]
             ).properties(title="Barrel Calorimeter Contributions (Z-R)", width=PLOT_SIZE[0], height=PLOT_SIZE[1]).interactive()
-
-            # print(barrel_df)
-            cone_view = altair.Chart(barrel_df).mark_circle().encode(
-                x=altair.X("delta_phi", scale=altair.Scale(domain=[(-deltaR) * 1.1, deltaR * 1.1])),
-                y=altair.Y("delta_eta", scale=altair.Scale(domain=[(-deltaR) * 1.1, deltaR * 1.1])),
-                size=altair.Size("energy", legend=None),
-                color=altair.Color("contained_in_cone", legend=None).scale(scheme="category10"),
-                tooltip=["energy", "contained_in_cone"]
-            ).properties(title="Barrel Calorimeter Shower with Cone Highlighting", width=PLOT_SIZE[0], height=PLOT_SIZE[1]).interactive()
 
             fig = go.Figure()
             shower_chart = make_3d_shower_chart(barrel_df)
@@ -412,7 +338,7 @@ if len(preprocessed_array) > 0:
                 y=[origin[1], direction_endpoint[1]],
                 z=[origin[2], direction_endpoint[2]],
                 mode="lines",
-                line=dict(color="red", width=2),
+                line=dict(color="red", width=1),
                 name="Particle Trajectory"
             )
 
@@ -458,7 +384,8 @@ if len(preprocessed_array) > 0:
                         shower_chart = make_3d_shower_chart(digitized_barrel_df, selected_z_layer)
                         figure.add_trace(shower_chart)
                     figure.update_layout(
-                        title=f"3D Voxel Visualization \n Fractional voxelized energy: {voxels['binned_energy'].sum() / barrel_df['energy'].sum():.2f}",
+                        title=f"3D Voxel Visualization \n Fractional voxelized energy: {voxels['binned_energy'].sum() / barrel_df['energy'].sum():.2f}\n"
+                        f"Total voxelized energy deposit: {voxels['binned_energy'].sum():.2f} MeV",
                         height=700,
                         margin=dict(l=0, r=0, b=0, t=30),
                         legend=legend_config

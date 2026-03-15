@@ -1,5 +1,6 @@
 import time
 import traceback
+from multiprocessing import Pool
 from pathlib import Path
 
 from acts.examples.odd import getOpenDataDetectorDirectory
@@ -10,6 +11,7 @@ from utils.config import create_base_parser, load_config
 
 # import acts
 
+MAX_PROCESSES = 32
 
 def parse_args():
     """Parse command line arguments"""
@@ -321,6 +323,11 @@ def main():
         args = parse_args()
         config = load_config(args)
 
+        # if running multiple processes, ensure they have different random seeds
+        num_processes = min(getattr(config, "num_processes", 1), MAX_PROCESSES)
+        if num_processes > 1:
+            config.seed = None
+        
         # Create output directory structure
         output_dir = Path(args.output)
         if hasattr(config, 'output_subdir') and config.output_subdir:
@@ -341,7 +348,17 @@ def main():
 
         # Run DD4hep simulation
         with timer.record("DD4hep Simulation"):
-            run_ddsim(input_path, output_path, config, logger)
+            if num_processes == 1:
+                run_ddsim(input_path, output_path, config, logger)
+            else: 
+                logger.info(f"Running in multi-process mode with {num_processes} processes")
+                # Create a list of configurations for each process with different seeds
+                output_paths = [output_dir / f"edm4hep_proc_{i}.root" for i in range(num_processes)]
+                arg_list = [(input_path, output_paths[i], config, setup_logging(f"Prog {i}")) for i in range(num_processes)]
+
+                # Run simulations in parallel
+                with Pool(processes=num_processes) as pool:
+                    pool.starmap(run_ddsim, arg_list)
 
         logger.info("DD4hep simulation completed successfully")
         logger.info(f"Output file: {output_path}")
