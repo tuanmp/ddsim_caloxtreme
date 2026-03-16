@@ -5,7 +5,8 @@ on: [push, pull_request]
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    # use alma9 for compatibility with CVMFS
+    runs-on: registry.cern.ch/ghcr.io/acts-project/alma9-base:70
 
     steps:
       - uses: actions/checkout@v4
