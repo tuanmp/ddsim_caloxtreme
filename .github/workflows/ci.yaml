@@ -6,7 +6,7 @@ on: [push, pull_request]
 jobs:
   build:
     # use alma9 for compatibility with CVMFS
-    runs-on: ubuntu-2404
+    runs-on: ubuntu-latest
     container:
       image: registry.cern.ch/ghcr.io/acts-project/alma9-base:70
 
