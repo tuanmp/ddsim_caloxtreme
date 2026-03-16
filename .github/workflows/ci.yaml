@@ -8,7 +8,7 @@ jobs:
     # use alma9 for compatibility with CVMFS
     runs-on: ubuntu-latest
     container:
-      image: registry.cern.ch/ghcr.io/acts-project/alma9-base:70
+      image: registry.cern.ch/ghcr.io/acts-project/ubuntu2404:85
       credentials:
         username: ${{ secrets.CERN_REGISTRY_USERNAME }}
         password: ${{ secrets.CERN_REGISTRY_PASSWORD }}
