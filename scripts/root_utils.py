@@ -13,11 +13,12 @@ BARREL_CONTRIBUTION_KEY = "ECalBarrelCollectionContributions"
 ENDCAP_CONTRIBUTION_KEY = "ECalEndcapCollectionContributions"
 PARTICLE_KEY = "MCParticles"
 
+
 def transformation_matrices(r_hat):
     """
     Construct local spherical basis (phi, theta, r)
     from a given unit radial vector r_hat.
-    
+
     Returns:
         R  : 3x3 rotation matrix (global -> local)
         RT : 3x3 inverse rotation (local -> global)
@@ -58,6 +59,7 @@ def get_root_files(directory: str) -> list[tuple[str, str]]:
                 root_files.append((display_path, full_path))
     return sorted(root_files)
 
+
 def extract_calo_showers(file_path, tree_name="events"):
     """
     Extracts calorimeter shower data from a ROOT file and returns it as a pandas DataFrame.
@@ -72,8 +74,9 @@ def extract_calo_showers(file_path, tree_name="events"):
     with uproot.open(file_path) as file:
         tree = file[tree_name]
         array = tree.arrays(library="ak")
-    
+
     return array
+
 
 def preprocess_calo_showers(array: ak.Array):
     """
@@ -87,121 +90,171 @@ def preprocess_calo_showers(array: ak.Array):
     """
     # Example preprocessing steps (these can be modified based on specific requirements)
 
-    array['ECalBarrelCollection.position.x'] = array['ECalBarrelCollection.position.x'] / 1000  # Convert from mm to m
-    array['ECalBarrelCollection.position.y'] = array['ECalBarrelCollection.position.y'] / 1000  # Convert from mm to m
-    array['ECalBarrelCollection.position.z'] = array['ECalBarrelCollection.position.z'] / 1000  # Convert from mm to m
-    
-    array['ECalBarrelCollection.position.r'] = np.sqrt( 
-        array['ECalBarrelCollection.position.x'] ** 2 + \
-        array['ECalBarrelCollection.position.y'] ** 2 
+    array["ECalBarrelCollection.position.x"] = (
+        array["ECalBarrelCollection.position.x"] / 1000
+    )  # Convert from mm to m
+    array["ECalBarrelCollection.position.y"] = (
+        array["ECalBarrelCollection.position.y"] / 1000
+    )  # Convert from mm to m
+    array["ECalBarrelCollection.position.z"] = (
+        array["ECalBarrelCollection.position.z"] / 1000
+    )  # Convert from mm to m
+
+    array["ECalBarrelCollection.position.r"] = np.sqrt(
+        array["ECalBarrelCollection.position.x"] ** 2
+        + array["ECalBarrelCollection.position.y"] ** 2
     )
 
-    array['ECalBarrelCollection.position.phi'] = np.arctan2( 
-        array['ECalBarrelCollection.position.y'],
-        array['ECalBarrelCollection.position.x'] 
+    array["ECalBarrelCollection.position.phi"] = np.arctan2(
+        array["ECalBarrelCollection.position.y"],
+        array["ECalBarrelCollection.position.x"],
     )
 
-    theta = np.arctan2( 
-        array['ECalBarrelCollection.position.r'],
-        array['ECalBarrelCollection.position.z'] 
+    theta = np.arctan2(
+        array["ECalBarrelCollection.position.r"],
+        array["ECalBarrelCollection.position.z"],
     )
 
-    array['ECalBarrelCollection.position.eta'] = - np.log( 
-        np.tan(theta / 2)
-    )
+    array["ECalBarrelCollection.position.eta"] = -np.log(np.tan(theta / 2))
 
     array["ECalBarrelCollection.energy"] = array["ECalBarrelCollection.energy"] * 1000
 
-    array['ECalEndcapCollection.position.x'] = array['ECalEndcapCollection.position.x'] / 1000  # Convert from mm to m
-    array['ECalEndcapCollection.position.y'] = array['ECalEndcapCollection.position.y'] / 1000  # Convert from mm to m
-    array['ECalEndcapCollection.position.z'] = array['ECalEndcapCollection.position.z'] / 1000  # Convert from mm to m
-    
-    array['ECalEndcapCollection.position.r'] = np.sqrt( 
-        array['ECalEndcapCollection.position.x'] ** 2 + \
-        array['ECalEndcapCollection.position.y'] ** 2 
+    array["ECalEndcapCollection.position.x"] = (
+        array["ECalEndcapCollection.position.x"] / 1000
+    )  # Convert from mm to m
+    array["ECalEndcapCollection.position.y"] = (
+        array["ECalEndcapCollection.position.y"] / 1000
+    )  # Convert from mm to m
+    array["ECalEndcapCollection.position.z"] = (
+        array["ECalEndcapCollection.position.z"] / 1000
+    )  # Convert from mm to m
+
+    array["ECalEndcapCollection.position.r"] = np.sqrt(
+        array["ECalEndcapCollection.position.x"] ** 2
+        + array["ECalEndcapCollection.position.y"] ** 2
     )
 
-    array['ECalEndcapCollection.position.phi'] = np.arctan2( 
-        array['ECalEndcapCollection.position.y'],
-        array['ECalEndcapCollection.position.x'] 
+    array["ECalEndcapCollection.position.phi"] = np.arctan2(
+        array["ECalEndcapCollection.position.y"],
+        array["ECalEndcapCollection.position.x"],
     )
 
-    theta = np.arctan2( 
-        array['ECalEndcapCollection.position.r'],
-        array['ECalEndcapCollection.position.z'] 
+    theta = np.arctan2(
+        array["ECalEndcapCollection.position.r"],
+        array["ECalEndcapCollection.position.z"],
     )
 
-    array['ECalEndcapCollection.position.eta'] = - np.log( 
-        np.tan(theta / 2)
-    )
+    array["ECalEndcapCollection.position.eta"] = -np.log(np.tan(theta / 2))
 
     array["ECalEndcapCollection.energy"] = array["ECalEndcapCollection.energy"] * 1000
 
-    array["ECalBarrelCollectionContributions.stepPosition.x"] = array["ECalBarrelCollectionContributions.stepPosition.x"] 
-    array["ECalBarrelCollectionContributions.stepPosition.y"] = array["ECalBarrelCollectionContributions.stepPosition.y"] 
-    array["ECalBarrelCollectionContributions.stepPosition.z"] = array["ECalBarrelCollectionContributions.stepPosition.z"] 
-    array["ECalBarrelCollectionContributions.energy"] = array["ECalBarrelCollectionContributions.energy"] * 1000
-
-    array["ECalBarrelCollectionContributions.stepPosition.r"] = np.sqrt(
-        array["ECalBarrelCollectionContributions.stepPosition.x"] ** 2 + \
-        array["ECalBarrelCollectionContributions.stepPosition.y"] ** 2
+    array["ECalBarrelCollectionContributions.stepPosition.x"] = array[
+        "ECalBarrelCollectionContributions.stepPosition.x"
+    ]
+    array["ECalBarrelCollectionContributions.stepPosition.y"] = array[
+        "ECalBarrelCollectionContributions.stepPosition.y"
+    ]
+    array["ECalBarrelCollectionContributions.stepPosition.z"] = array[
+        "ECalBarrelCollectionContributions.stepPosition.z"
+    ]
+    array["ECalBarrelCollectionContributions.energy"] = (
+        array["ECalBarrelCollectionContributions.energy"] * 1000
     )
 
-    array["ECalEndcapCollectionContributions.stepPosition.x"] = array["ECalEndcapCollectionContributions.stepPosition.x"] / 1000
-    array["ECalEndcapCollectionContributions.stepPosition.y"] = array["ECalEndcapCollectionContributions.stepPosition.y"] / 1000
-    array["ECalEndcapCollectionContributions.stepPosition.z"] = array["ECalEndcapCollectionContributions.stepPosition.z"] / 1000
-    array["ECalEndcapCollectionContributions.energy"] = array["ECalEndcapCollectionContributions.energy"] * 1000
+    array["ECalBarrelCollectionContributions.stepPosition.r"] = np.sqrt(
+        array["ECalBarrelCollectionContributions.stepPosition.x"] ** 2
+        + array["ECalBarrelCollectionContributions.stepPosition.y"] ** 2
+    )
+
+    array["ECalEndcapCollectionContributions.stepPosition.x"] = (
+        array["ECalEndcapCollectionContributions.stepPosition.x"] / 1000
+    )
+    array["ECalEndcapCollectionContributions.stepPosition.y"] = (
+        array["ECalEndcapCollectionContributions.stepPosition.y"] / 1000
+    )
+    array["ECalEndcapCollectionContributions.stepPosition.z"] = (
+        array["ECalEndcapCollectionContributions.stepPosition.z"] / 1000
+    )
+    array["ECalEndcapCollectionContributions.energy"] = (
+        array["ECalEndcapCollectionContributions.energy"] * 1000
+    )
 
     array["ECalEndcapCollectionContributions.stepPosition.r"] = np.sqrt(
-        array["ECalEndcapCollectionContributions.stepPosition.x"] ** 2 + \
-        array["ECalEndcapCollectionContributions.stepPosition.y"] ** 2
+        array["ECalEndcapCollectionContributions.stepPosition.x"] ** 2
+        + array["ECalEndcapCollectionContributions.stepPosition.y"] ** 2
     )
 
     return array
+
 
 def preprocess_particles(array: ak.Array):
     # Example processing steps for particles (these can be modified based on specific requirements)
-    array['MCParticles.endpoint.x'] = array['MCParticles.endpoint.x'] / 1000  # Convert from mm to m
-    array['MCParticles.endpoint.y'] = array['MCParticles.endpoint.y'] / 1000  # Convert from mm to m
-    array['MCParticles.endpoint.z'] = array['MCParticles.endpoint.z'] / 1000  # Convert from mm to m
+    array["MCParticles.endpoint.x"] = (
+        array["MCParticles.endpoint.x"] / 1000
+    )  # Convert from mm to m
+    array["MCParticles.endpoint.y"] = (
+        array["MCParticles.endpoint.y"] / 1000
+    )  # Convert from mm to m
+    array["MCParticles.endpoint.z"] = (
+        array["MCParticles.endpoint.z"] / 1000
+    )  # Convert from mm to m
 
-    array['MCParticles.vertex.x'] = array['MCParticles.vertex.x'] / 1000  # Convert from mm to m
-    array['MCParticles.vertex.y'] = array['MCParticles.vertex.y'] / 1000  # Convert from mm to m
-    array['MCParticles.vertex.z'] = array['MCParticles.vertex.z'] / 1000  # Convert from mm to m
+    array["MCParticles.vertex.x"] = (
+        array["MCParticles.vertex.x"] / 1000
+    )  # Convert from mm to m
+    array["MCParticles.vertex.y"] = (
+        array["MCParticles.vertex.y"] / 1000
+    )  # Convert from mm to m
+    array["MCParticles.vertex.z"] = (
+        array["MCParticles.vertex.z"] / 1000
+    )  # Convert from mm to m
 
     array["MCParticles.endpoint.r"] = np.sqrt(
-        array["MCParticles.endpoint.x"] ** 2 + \
-        array["MCParticles.endpoint.y"] ** 2 
+        array["MCParticles.endpoint.x"] ** 2 + array["MCParticles.endpoint.y"] ** 2
     )
 
     array["MCParticles.vertex.r"] = np.sqrt(
-        array["MCParticles.vertex.x"] ** 2 + \
-        array["MCParticles.vertex.y"] ** 2 
+        array["MCParticles.vertex.x"] ** 2 + array["MCParticles.vertex.y"] ** 2
     )
 
     momentum_magnitude = np.sqrt(
-        array["MCParticles.momentum.x"] ** 2 + \
-        array["MCParticles.momentum.y"] ** 2 + \
-        array["MCParticles.momentum.z"] ** 2
+        array["MCParticles.momentum.x"] ** 2
+        + array["MCParticles.momentum.y"] ** 2
+        + array["MCParticles.momentum.z"] ** 2
     )
 
-    array["MCParticles.direction.x"] = array["MCParticles.momentum.x"] / momentum_magnitude
-    array["MCParticles.direction.y"] = array["MCParticles.momentum.y"] / momentum_magnitude
-    array["MCParticles.direction.z"] = array["MCParticles.momentum.z"] / momentum_magnitude
+    array["MCParticles.direction.x"] = (
+        array["MCParticles.momentum.x"] / momentum_magnitude
+    )
+    array["MCParticles.direction.y"] = (
+        array["MCParticles.momentum.y"] / momentum_magnitude
+    )
+    array["MCParticles.direction.z"] = (
+        array["MCParticles.momentum.z"] / momentum_magnitude
+    )
 
     return array
 
-def compute_relative_position(shower_df: pd.DataFrame, particle_df: pd.DataFrame) -> pd.DataFrame:
 
+def compute_relative_position(
+    shower_df: pd.DataFrame, particle_df: pd.DataFrame
+) -> pd.DataFrame:
     particle_df = particle_df[particle_df["MCParticles_generatorStatus"] == 1]
 
-    assert len(particle_df) == 1, f"Expected exactly one particle per event for relative position computation. Got {len(particle_df)} particles. {particle_df}"
+    assert len(particle_df) == 1, (
+        f"Expected exactly one particle per event for relative position computation. Got {len(particle_df)} particles. {particle_df}"
+    )
     # Compute relative position of shower pixels to the direction of propagation of the particle
     position_keys = ["x", "y", "z"]
-    global_position = shower_df[position_keys].to_numpy()  # Convert to NumPy array for vectorized operations
+    global_position = shower_df[
+        position_keys
+    ].to_numpy()  # Convert to NumPy array for vectorized operations
 
-
-    direction_keys = ["MCParticles_direction_x", "MCParticles_direction_y", "MCParticles_direction_z"]
+    direction_keys = [
+        "MCParticles_direction_x",
+        "MCParticles_direction_y",
+        "MCParticles_direction_z",
+    ]
     direction = particle_df[direction_keys].to_numpy().flatten()
 
     R, RT = transformation_matrices(direction)
@@ -209,8 +262,11 @@ def compute_relative_position(shower_df: pd.DataFrame, particle_df: pd.DataFrame
     local_coordinates = (R @ global_position.T).T
     shower_df[["local_x", "local_y", "local_z"]] = local_coordinates
 
-    shower_df["local_r"] = np.linalg.norm(local_coordinates[:, :2], axis=1)  # Radial distance in the local frame (perpendicular to particle direction)
-    shower_df["local_phi"] = np.arctan2(local_coordinates[:, 1], local_coordinates[:, 0])  # Azimuthal angle in the local frame
+    shower_df["local_r"] = np.linalg.norm(
+        local_coordinates[:, :2], axis=1
+    )  # Radial distance in the local frame (perpendicular to particle direction)
+    shower_df["local_phi"] = np.arctan2(
+        local_coordinates[:, 1], local_coordinates[:, 0]
+    )  # Azimuthal angle in the local frame
 
     return shower_df
-

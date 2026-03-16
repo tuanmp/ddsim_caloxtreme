@@ -31,9 +31,7 @@ _WORKER_BINNING_XML: str | None = None
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description=(
-            "Convert ROOT calorimeter showers to voxelized HDF5 datasets."
-        )
+        description=("Convert ROOT calorimeter showers to voxelized HDF5 datasets.")
     )
     parser.add_argument(
         "--input",
@@ -92,9 +90,7 @@ def event_to_voxel_shower(
     envelope_xml: str,
     binning_xml: str,
 ) -> np.ndarray | None:
-    barrel_keys = [
-        key for key in event_data.fields if key.startswith(f"{BARREL_KEY}.")
-    ]
+    barrel_keys = [key for key in event_data.fields if key.startswith(f"{BARREL_KEY}.")]
     particle_keys = [
         key for key in event_data.fields if key.startswith(f"{PARTICLE_KEY}.")
     ]
@@ -109,10 +105,14 @@ def event_to_voxel_shower(
         columns=lambda col: col.replace(".", "_").split("_")[-1]
     )
     particle_df = particle_df.rename(columns=lambda col: col.replace(".", "_"))
-    particle_df = particle_df[particle_df["MCParticles_generatorStatus"] == 1].reset_index(drop=True)
+    particle_df = particle_df[
+        particle_df["MCParticles_generatorStatus"] == 1
+    ].reset_index(drop=True)
     assert len(particle_df) == 1, "Expected exactly one primary particle per event."
-    momentum = particle_df[["MCParticles_momentum_x", "MCParticles_momentum_y", "MCParticles_momentum_z"]].to_numpy()
-    momentum = np.linalg.norm(momentum, axis=1) * 1000 # convert to MeV
+    momentum = particle_df[
+        ["MCParticles_momentum_x", "MCParticles_momentum_y", "MCParticles_momentum_z"]
+    ].to_numpy()
+    momentum = np.linalg.norm(momentum, axis=1) * 1000  # convert to MeV
 
     barrel_df = compute_relative_position(barrel_df, particle_df)
     voxels = get_voxels(particle_df, envelope_xml, binning_xml)
@@ -216,10 +216,7 @@ def main() -> int:
                             expected_num_voxels = len(shower)
                         elif len(shower) != expected_num_voxels:
                             raise ValueError(
-                                (
-                                    "Inconsistent voxel vector size across "
-                                    "events: "
-                                )
+                                ("Inconsistent voxel vector size across events: ")
                                 + (
                                     f"expected {expected_num_voxels}, "
                                     f"got {len(shower)} in {root_file}."
