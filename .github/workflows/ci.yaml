@@ -1,0 +1,22 @@
+# .github/workflows/ci.yml
+name: CI with CVMFS
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup CVMFS
+        uses: cvmfs-contrib/github-action-cvmfs@v4
+        with:
+          cvmfs_repositories: 'sft.cern.ch,geant4.cern.ch'
+
+      - name: Use software from CVMFS
+        run: |
+          ls /cvmfs/sft.cern.ch
+          source /cvmfs/sft.cern.ch/lcg/views/LCG_105/x86_64-el9-gcc13-opt/setup.sh
+          python --version
