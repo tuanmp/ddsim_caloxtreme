@@ -16,8 +16,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Fix GitHub Actions path in container
+        run: |
+          mkdir -p /home/runner
+          if [ ! -e /home/runner/work ]; then
+            ln -s /__w /home/runner/work
+          fi
+
       - name: Setup CVMFS
-        uses: cvmfs-contrib/github-action-cvmfs@v5
+        uses: cvmfs-contrib/github-action-cvmfs@v5.5
+        with:
+          cvmfs_repositories: 'sft.cern.ch,geant4.cern.ch'
         
       - name: Use software from CVMFS
         run: |
