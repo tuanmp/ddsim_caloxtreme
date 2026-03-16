@@ -17,10 +17,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Setup CVMFS
-        uses: cvmfs-contrib/github-action-cvmfs@v4
-        with:
-          cvmfs_repositories: 'sft.cern.ch,geant4.cern.ch'
-
+        uses: cvmfs-contrib/github-action-cvmfs@v5
+        
       - name: Use software from CVMFS
         run: |
           ls /
