@@ -18,6 +18,7 @@ jobs:
       - name: Use software from CVMFS
         run: |
           ls /cvmfs/sft.cern.ch
+          uname -m
           ls /cvmfs/sft.cern.ch/lcg/views/LCG_107/x86_64-el9-gcc13-opt/setup.sh
           source /cvmfs/sft.cern.ch/lcg/views/LCG_107/x86_64-el9-gcc13-opt/setup.sh
           python --version
