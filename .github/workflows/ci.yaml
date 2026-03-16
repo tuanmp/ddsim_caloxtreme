@@ -9,6 +9,9 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: registry.cern.ch/ghcr.io/acts-project/alma9-base:70
+      credentials:
+        username: ${{ secrets.CERN_REGISTRY_USERNAME }}
+        password: ${{ secrets.CERN_REGISTRY_PASSWORD }}
 
     steps:
       - uses: actions/checkout@v4
