@@ -24,7 +24,7 @@ jobs:
           fi
 
       - name: Setup CVMFS
-        uses: cvmfs-contrib/github-action-cvmfs@v5.5
+        uses: cvmfs-contrib/github-action-cvmfs@v5.4
         with:
           cvmfs_repositories: 'sft.cern.ch,geant4.cern.ch'
         
