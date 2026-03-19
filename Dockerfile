@@ -5,12 +5,14 @@ ENV ACTS_VERSION=v39.2.1 \
     LCG_PLATFORM=el9 \
     LCG_VERSION=107
 
-WORKDIR /ddsim_caloxtreme
+WORKDIR /srv
 
-COPY . .
+COPY ./build_docker_env.sh .
 
 RUN . /cvmfs/sft.cern.ch/lcg/views/LCG_${LCG_VERSION}/x86_64-${LCG_PLATFORM}-gcc13-opt/setup.sh \
-    && chmod +x build_all.sh \
-    && ./build_all.sh
+    && chmod +x build_docker_env.sh \
+    && ./build_docker_env.sh
 
-CMD ["/bin/bash"]
+COPY ./entrypoint.sh .
+RUN chmod +x /srv/entrypoint.sh
+ENTRYPOINT ["/srv/entrypoint.sh"]

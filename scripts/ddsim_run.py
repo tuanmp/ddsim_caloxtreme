@@ -159,8 +159,6 @@ def configure_detector(ddsim, detector_xml: str = None):
         odd_dir = cur_dir / "detector"
         odd_xml = odd_dir / "OpenDataDetector_noB_noTrack.xml"
 
-    print(f"Looking for detector XML at: {odd_xml}")
-
     assert odd_xml.exists(), f"Detector XML file not found: {odd_xml}"
 
     # Configure DD4hep # TODO: This logic is probably backwards!!
@@ -303,7 +301,7 @@ def run_ddsim(input_path, output_path, config, logger=None):
     # Configure common settings
     ddsim.outputFile = str(output_path)
     ddsim.numberOfEvents = config.events if config.events is not None else 10
-    ddsim.numberOfThreads = config.threads if config.threads is not None else 1
+    # ddsim.numberOfThreads = config.threads if config.threads is not None else 1
     ddsim.random.enableEventSeed = True
     ddsim.random.seed = getattr(config, "seed", None) or int(time.time())
 
@@ -362,6 +360,7 @@ def main():
         # Run DD4hep simulation
         with timer.record("DD4hep Simulation"):
             if num_processes == 1:
+                logger.info(config)
                 run_ddsim(input_path, output_path, config, logger)
             else:
                 logger.info(
