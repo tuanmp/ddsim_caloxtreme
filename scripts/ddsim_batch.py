@@ -32,10 +32,10 @@ from utils.app_logging import setup_logging
 def parse_args():
     parser = ArgumentParser(description="Batch steering script for generating yaml config files based on incident energy values from a csv file.")
     parser.add_argument("--template", required=True, help="Path to the template yaml config file.")
-    parser.add_argument("--energy", type=float, required=True, help="Path to the csv file containing incident energy values.")
+    parser.add_argument("--energy", type=float, required=True, default=None, help="Incident energy value.")
     parser.add_argument("--output_dir", required=True, help="Directory to store the generated yaml config files and output data.")
     parser.add_argument("--proc-idx", type=int, default=0, help="Process index for parallel execution.")
-    parser.add_argument("--n-events", type=int, default=1000, help="Number of events to simulate per process.")
+    parser.add_argument("--events", type=int, default=1000, help="Number of events to simulate per process.")
 
     return parser.parse_args()
 
@@ -50,7 +50,11 @@ def fill_config(args):
         if getattr(args, key, None) is None:
             setattr(args, key, value)
 
-    setattr(args, "gun_energy", float(args.energy))
+    setattr(args, "single_particle", True)
+    if args.energy is not None:
+        setattr(args, "gun_energy", float(args.energy))
+    else:
+        assert getattr(args, "gun_momentum_min", None) is not None and getattr(args, "gun_momentum_max", None) is not None, "Either energy or momentum range must be specified in the config or as an argument."
     setattr(args, "seed", hash((args.energy, args.proc_idx)) % (2**32))  # Generate a unique seed based on energy and process index
     
     return args

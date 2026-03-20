@@ -56,7 +56,7 @@ def main():
     n_proc_per_energy = math.ceil(N_EVENTS_TARGET / N_EVENTS_PER_PROC)
     n_tasks = n_energies * n_proc_per_energy
 
-    print(f"Energies        : {n_energies}")
+    print(f"Energies        : {n_energies}  ({', '.join(energies)})")
     print(f"Processes/energy: {n_proc_per_energy}  ({N_EVENTS_PER_PROC} events each)")
     print(f"Total tasks     : {n_tasks}  (array 0-{n_tasks-1})")
     print(f"Max concurrent  : {MAX_CONCURRENT}")

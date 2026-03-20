@@ -51,20 +51,11 @@ echo "========================================"
 
 mkdir -p logs
 
-# chmod 644 $CONFIG_FILE
-# podman-hpc run --rm --cfs --cvmfs --scratch -v $(pwd):/srv/ddsim caloxtreme:v0.2 \
-#     "/srv/ddsim/scripts/ddsim_batch.py" \
-#     --energy     "$ENERGY"          \
-#     --proc-idx   "$PROC_IDX"        \
-#     --n-events   "$N_EVENTS_PER_PROC" \
-#     --output-dir "$OUTPUT_DIR"      \
-#     --template     "$CONFIG_FILE"
-
 podman-hpc run --rm --cfs --cvmfs --scratch -v $(pwd):/srv/ddsim caloxtreme:v0.2 \
     python /srv/ddsim/scripts/ddsim_batch.py \
     --energy     $ENERGY          \
     --proc-idx   $PROC_IDX        \
-    --n-events   $N_EVENTS_PER_PROC \
+    --events   $N_EVENTS_PER_PROC \
     --output_dir $OUTPUT_DIR    \
     --template  $CONFIG_FILE
 
