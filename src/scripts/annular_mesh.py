@@ -2,7 +2,7 @@ import numpy as np
 import plotly.graph_objects as go
 import streamlit as st
 
-from scripts.root_utils import transformation_matrices
+from src.scripts.root_utils import transformation_matrices
 
 # ── Parameters ───────────────────────────────────────────────────────────────
 R1 = 1

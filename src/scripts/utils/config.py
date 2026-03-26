@@ -1,15 +1,45 @@
-import yaml
-from pathlib import Path
 import argparse
 import hashlib
 import logging
 import time
+from pathlib import Path
+
+import yaml
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
+SUBDIR = "energy"
+
+def fill_config(args):
+
+    with open(args.template, 'r') as f:
+        template_config = yaml.safe_load(f)
+    
+    for key, value in template_config.items():
+        if getattr(args, key, None) is None:
+            setattr(args, key, value)
+
+    setattr(args, "single_particle", True)
+    if getattr(args, "energy", None) is not None:
+        setattr(args, "gun_energy", float(args.energy))
+        setattr(args, "seed", hash((args.energy, getattr(args, "proc_idx", 0))) % (2**32))  # Generate a unique seed based on energy and process index
+
+    else:
+        assert getattr(args, "gun_momentum_min", None) is not None and getattr(args, "gun_momentum_max", None) is not None, "Either energy or momentum range must be specified in the config or as an argument."
+        setattr(args, "seed", hash((args.gun_momentum_min, args.gun_momentum_max, getattr(args, "proc_idx", 0))) % (2**32))  # Generate a unique seed based on momentum range and process index
+    
+    return args
+
+def get_output_subdir(args):
+    if getattr(args, "gun_energy", None) is not None:
+        output_dir = Path(args.output_dir) / args.dataset / f"{SUBDIR}_{int(args.gun_energy)}_GeV"
+    else:
+        output_dir = Path(args.output_dir) / args.dataset / f"{SUBDIR}_{int(args.gun_momentum_min)}_{int(args.gun_momentum_max)}_GeV"
+    
+    return output_dir
 
 def hash_seed_string(seed_str: str) -> int:
     """Convert a string seed pattern into a deterministic positive integer.

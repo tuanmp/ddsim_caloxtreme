@@ -1,0 +1,1 @@
+uv run -m src.batch.submit_voxelize --input /pscratch/sd/p/pmtuan/ddsim/single_pion_uniform/energy_5_500_GeV/ --binning-xml binning_dataset_1_pions.xml --envelope-xml xml/OpenDataDetectorEnvelopes.xml --output /pscratch/sd/p/pmtuan/ddsim/single_pion_uniform/voxelized_showers --num-workers 16 --walltime "06:00:00" 

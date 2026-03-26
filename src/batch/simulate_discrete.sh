@@ -1,12 +1,11 @@
 #!/bin/bash
 #SBATCH --job-name=sim_array
-#SBATCH --output=logs/sim_%A_%a.out      # %A = job ID, %a = array task ID
+#SBATCH --output=logs/sim_discrete/sim_%A_%a.out      # %A = job ID, %a = array task ID
 #SBATCH -A m2616
 #SBATCH -C cpu
-#SBATCH -q regular
-#SBATCH --error=logs/sim_%A_%a.err
+#SBATCH -q shared
+#SBATCH --error=logs/sim_discrete/sim_%A_%a.err
 #SBATCH --time=01:00:00                  # walltime per task — tune to your sim length
-#SBATCH --mem=2G                         # memory per task
 #SBATCH --cpus-per-task=1               # each task is single-threaded
 #SBATCH --array=0-0                      # overridden at submission time by submit.py
 #SBATCH --signal=SIGUSR1@180
@@ -49,10 +48,10 @@ echo "========================================"
 # module load root/6.28
 # source /path/to/your/venv/bin/activate
 
-mkdir -p logs
+mkdir -p logs/sim_discrete/
 
-podman-hpc run --rm --cfs --cvmfs --scratch -v $(pwd):/srv/ddsim caloxtreme:v0.2 \
-    python /srv/ddsim/scripts/ddsim_batch.py \
+podman-hpc run --rm --cfs --cvmfs --scratch -w /srv/ddsim -v $(pwd):/srv/ddsim caloxtreme:v0.2 \
+    python -m src.scripts.ddsim_batch \
     --energy     $ENERGY          \
     --proc-idx   $PROC_IDX        \
     --events   $N_EVENTS_PER_PROC \

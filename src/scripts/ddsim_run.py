@@ -6,8 +6,9 @@ from pathlib import Path
 from acts.examples.odd import getOpenDataDetectorDirectory
 from DDSim.DD4hepSimulation import DD4hepSimulation
 from g4units import GeV
-from utils.app_logging import TimingRecorder, setup_logging
-from utils.config import create_base_parser, load_config
+
+from src.scripts.utils.app_logging import TimingRecorder, setup_logging
+from src.scripts.utils.config import create_base_parser, load_config
 
 # import acts
 

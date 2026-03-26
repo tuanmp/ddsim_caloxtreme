@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import vector
 
-from scripts.root_utils import transformation_matrices
+from src.scripts.root_utils import transformation_matrices
 
 
 def get_ecal_barrel_dimensions(xml_file):
@@ -411,7 +411,7 @@ def get_voxels(
 
 def main():
     """Test the get_ecal_barrel_dimensions and read_binning_structure functions."""
-    xml_path = "detector/OpenDataDetectorEnvelopes.xml"
+    xml_path = "xml/OpenDataDetectorEnvelopes.xml"
 
     try:
         print(f"Reading ECal barrel dimensions from: {xml_path}")
