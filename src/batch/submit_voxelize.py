@@ -46,20 +46,21 @@ def assemble_cmd(args, array_spec, all_input_files, all_output_files):
 
 def main():
 
-    args = get_parser().parse_args()
+    parser = get_parser()
+    args = parser.parse_args()
 
     root_files = collect_root_files(args.input)
 
     if not root_files:
         logging.error("No valid ROOT files found.")
         return 1
-    logging.info(f"Found {len(root_files)} ROOT files to process.")
+    logging.info(f"Found {len(root_files)} ROOT files.")
 
     file_to_process = []
 
     for root_file in root_files:
-
-        output_file = args.output / (root_file.stem + ".hdf5")
+        output_dir = args.output or root_file.resolve().parent
+        output_file = output_dir / (root_file.stem + ".hdf5")
 
         if not output_file.exists():
             file_to_process.append((root_file, output_file))
@@ -78,7 +79,7 @@ def main():
     cmd = assemble_cmd(args, array_spec, all_input_files, all_output_files)
 
     logging.info("Command:")
-    logging.info("  " + " ".join(cmd).lstrip()[:200] + " ...")  # Truncate long command for logging
+    logging.info("  " + " ".join(cmd).lstrip()[:500] + " ...")  # Truncate long command for logging
 
     if args.dry_run:
         logging.info("[dry-run] Not submitting.")

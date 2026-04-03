@@ -56,8 +56,8 @@ def get_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--output",
-        required=True,
         type=Path,
+        default=None,
         help="Output HDF5 file path.",
     )
     parser.add_argument(
@@ -208,7 +208,9 @@ def main() -> int:
 
     if args.num_workers < 1:
         raise ValueError("--num-workers must be >= 1")
-
+    if args.output is None:
+        raise ValueError("--output is required")
+    
     root_files = collect_root_files(args.input)
     if not root_files:
         raise FileNotFoundError(f"No ROOT files found at: {args.input}")

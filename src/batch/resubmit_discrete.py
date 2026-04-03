@@ -18,6 +18,14 @@ from pathlib import Path
 
 import yaml
 
+# Support running this file directly (e.g. `uv run src/batch/resubmit_discrete.py`).
+# In that mode Python does not add the repository root to sys.path automatically.
+if __package__ is None or __package__ == "":
+    repo_root = Path(__file__).resolve().parents[2]
+    repo_root_str = str(repo_root)
+    if repo_root_str not in sys.path:
+        sys.path.insert(0, repo_root_str)
+        
 from src.batch.resubmit_range import find_missing_task_ids
 from src.batch.submit_discrete import (
     MAX_CONCURRENT,
@@ -83,6 +91,9 @@ def main():
         print("\n[dry-run] Not submitting.")
         return
 
+    if len(missing) == 0:
+        print("\nNo tasks to resubmit. Exiting.")
+        return
     os.makedirs("logs", exist_ok=True)
     result = subprocess.run(cmd, capture_output=True, text=True)
     print(result.stdout)
